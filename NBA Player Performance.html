@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Shawntay Brown">
+
+<title>What Drives NBA Scoring? A Regression Analysis of Player Performance</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="NBA Player Performance_files/libs/clipboard/clipboard.min.js"></script>
+<script src="NBA Player Performance_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="NBA Player Performance_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="NBA Player Performance_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="NBA Player Performance_files/libs/quarto-html/popper.min.js"></script>
+<script src="NBA Player Performance_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="NBA Player Performance_files/libs/quarto-html/anchor.min.js"></script>
+<link href="NBA Player Performance_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="NBA Player Performance_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="NBA Player Performance_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="NBA Player Performance_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="NBA Player Performance_files/libs/bootstrap/bootstrap-9e3ffae467580fdb927a41352e75a2e0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">What Drives NBA Scoring? A Regression Analysis of Player Performance</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Shawntay Brown </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="nba-player-performance-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="nba-player-performance-analysis">NBA Player Performance Analysis</h2>
+<p>This project analyzes the factors that influence NBA player scoring performance, focusing on how playing time, shooting efficiency, and player position impact points per game (PPG).</p>
+<p>Using descriptive statistics, data visualization, and regression modeling, the analysis evaluates the relative influence of these variables on offensive production. The project aims to identify the strongest predictors of scoring output and demonstrate how opportunity, efficiency, and player role interact to influence overall performance.</p>
+<p>##Loading and Cleaning Data</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load required libraries</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'readr' was built under R version 4.5.2</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'ggplot2' was built under R version 4.5.2</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import NBA player performance dataset</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"nbadataset/Player Per Game.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 33278 Columns: 32</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (5): lg, player, player_id, team, pos
+dbl (27): season, age, g, gs, mp_per_game, fg_per_game, fga_per_game, fg_per...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Preview dataset structure</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 33,278
+Columns: 32
+$ season        &lt;dbl&gt; 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 20…
+$ lg            &lt;chr&gt; "NBA", "NBA", "NBA", "NBA", "NBA", "NBA", "NBA", "NBA", …
+$ player        &lt;chr&gt; "Precious Achiuwa", "Steven Adams", "Bam Adebayo", "Ocha…
+$ player_id     &lt;chr&gt; "achiupr01", "adamsst01", "adebaba01", "agbajoc01", "agb…
+$ age           &lt;dbl&gt; 26, 32, 28, 25, 25, 25, 25, 27, 22, 30, 27, 27, 27, 27, …
+$ team          &lt;chr&gt; "SAC", "HOU", "MIA", "2TM", "TOR", "BRK", "MEM", "ATL", …
+$ pos           &lt;chr&gt; "C", "C", "C", "SG", "SG", "SG", "PF", "SG", "SG", "SG",…
+$ g             &lt;dbl&gt; 53, 32, 53, 49, 42, 7, 43, 58, 5, 38, 49, 49, 41, 8, 24,…
+$ gs            &lt;dbl&gt; 37, 11, 53, 13, 13, 0, 11, 51, 0, 26, 49, 0, 0, 0, 3, 0,…
+$ mp_per_game   &lt;dbl&gt; 21.2, 22.8, 31.4, 15.5, 15.5, 15.7, 27.9, 33.2, 8.4, 30.…
+$ fg_per_game   &lt;dbl&gt; 3.5, 2.2, 6.6, 1.8, 1.7, 2.0, 5.3, 6.7, 1.2, 5.7, 6.0, 2…
+$ fga_per_game  &lt;dbl&gt; 6.7, 4.3, 14.8, 4.1, 4.0, 4.6, 11.1, 15.5, 1.8, 13.9, 9.…
+$ fg_percent    &lt;dbl&gt; 0.517, 0.504, 0.449, 0.426, 0.424, 0.438, 0.479, 0.431, …
+$ x3p_per_game  &lt;dbl&gt; 0.4, 0.0, 1.7, 0.5, 0.3, 1.6, 1.6, 3.0, 0.4, 3.4, 0.0, 1…
+$ x3pa_per_game &lt;dbl&gt; 1.2, 0.0, 4.9, 1.8, 1.5, 3.0, 4.7, 8.1, 0.6, 9.4, 0.2, 4…
+$ x3p_percent   &lt;dbl&gt; 0.328, NA, 0.344, 0.267, 0.185, 0.524, 0.350, 0.373, 0.6…
+$ x2p_per_game  &lt;dbl&gt; 3.1, 2.2, 4.9, 1.3, 1.4, 0.4, 3.7, 3.7, 0.8, 2.3, 6.0, 1…
+$ x2pa_per_game &lt;dbl&gt; 5.5, 4.3, 9.9, 2.4, 2.5, 1.6, 6.4, 7.4, 1.2, 4.6, 9.2, 2…
+$ x2p_percent   &lt;dbl&gt; 0.556, 0.504, 0.501, 0.543, 0.571, 0.273, 0.572, 0.495, …
+$ e_fg_percent  &lt;dbl&gt; 0.545, 0.504, 0.506, 0.483, 0.459, 0.609, 0.553, 0.529, …
+$ ft_per_game   &lt;dbl&gt; 0.8, 1.5, 3.7, 0.5, 0.6, 0.1, 1.8, 3.4, 0.0, 2.8, 3.3, 0…
+$ fta_per_game  &lt;dbl&gt; 1.5, 2.5, 4.8, 0.6, 0.7, 0.3, 2.7, 3.9, 0.0, 3.2, 4.5, 0…
+$ ft_percent    &lt;dbl&gt; 0.532, 0.580, 0.765, 0.839, 0.862, 0.500, 0.667, 0.888, …
+$ orb_per_game  &lt;dbl&gt; 2.1, 4.5, 2.1, 0.8, 0.8, 0.7, 1.6, 0.6, 0.0, 0.7, 2.7, 0…
+$ drb_per_game  &lt;dbl&gt; 3.7, 4.1, 7.8, 1.5, 1.5, 1.7, 5.1, 3.0, 0.8, 2.4, 6.0, 2…
+$ trb_per_game  &lt;dbl&gt; 5.8, 8.6, 9.9, 2.3, 2.3, 2.4, 6.7, 3.6, 0.8, 3.1, 8.6, 2…
+$ ast_per_game  &lt;dbl&gt; 1.2, 1.5, 2.8, 0.8, 0.7, 1.4, 2.9, 3.8, 1.0, 3.9, 2.0, 3…
+$ stl_per_game  &lt;dbl&gt; 0.9, 0.7, 1.0, 0.4, 0.4, 0.1, 0.9, 1.2, 0.2, 1.4, 1.0, 1…
+$ blk_per_game  &lt;dbl&gt; 0.6, 0.6, 0.7, 0.3, 0.3, 0.4, 0.7, 0.6, 0.2, 0.3, 0.9, 0…
+$ tov_per_game  &lt;dbl&gt; 0.7, 1.1, 1.8, 0.4, 0.5, 0.4, 1.3, 2.1, 0.2, 1.7, 1.3, 1…
+$ pf_per_game   &lt;dbl&gt; 1.7, 1.7, 1.6, 1.6, 1.8, 0.6, 1.6, 2.1, 0.8, 2.2, 1.8, 2…
+$ pts_per_game  &lt;dbl&gt; 8.1, 5.8, 18.6, 4.5, 4.3, 5.7, 14.0, 19.8, 2.8, 17.5, 15…</code></pre>
+</div>
+</div>
+<p>The dataset contains over 33,000 NBA player observations and includes variables related to: - scoring performance, - shooting efficiency, - playing time, - and player position.</p>
+<p>Key variables analyzed in this project include: - Points Per Game (PTS), - Minutes Played (MP), - Field Goal Percentage (FG%), - Three-Point Percentage (3P%), - Free Throw Percentage (FT%), - Position</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove low-minute players to reduce noise and improve model stability</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>df_clean <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(mp_per_game <span class="sc">&gt;=</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Players averaging fewer than 10 minutes per game were excluded from the analysis. Low-minute players often exhibit highly variable performance statistics due to limited playing time, which can introduce noise and distort overall scoring trends.</p>
+<p>Filtering these observations improves the stability and interpretability of the analysis by focusing on players with more consistent game participation and offensive roles.</p>
+</section>
+<section id="top-scorers" class="level2">
+<h2 class="anchored" data-anchor-id="top-scorers">Top Scorers</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify top scorers in the dataset</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>df_clean <span class="sc">|&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(pts_per_game)) <span class="sc">|&gt;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(player, team, pos, pts_per_game, mp_per_game) <span class="sc">|&gt;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 5
+   player           team  pos   pts_per_game mp_per_game
+   &lt;chr&gt;            &lt;chr&gt; &lt;chr&gt;        &lt;dbl&gt;       &lt;dbl&gt;
+ 1 Wilt Chamberlain PHW   C             50.4        48.5
+ 2 Wilt Chamberlain SFW   C             44.8        47.6
+ 3 Wilt Chamberlain SFW   C             38.9        45.9
+ 4 Wilt Chamberlain PHW   C             38.4        47.8
+ 5 Elgin Baylor     LAL   SF            38.3        44.4
+ 6 Wilt Chamberlain PHW   C             37.6        46.4
+ 7 Michael Jordan   CHI   SG            37.1        40  
+ 8 Wilt Chamberlain SFW   C             36.9        46.1
+ 9 James Harden     HOU   PG            36.1        36.8
+10 Rick Barry       SFW   SF            35.6        40.7</code></pre>
+</div>
+</div>
+<p>The highest-scoring players in the dataset also tend to average high minutes per game, suggesting a strong relationship between playing time and scoring production.</p>
+<p>This finding indicates that scoring output is influenced not only by shooting ability and offensive skill, but also by opportunity and player usage. Increased playing time provides players with more possessions and scoring opportunities, which may contribute to higher points-per-game averages.</p>
+</section>
+<section id="points-by-position" class="level2">
+<h2 class="anchored" data-anchor-id="points-by-position">Points By Position</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate average scoring by player position</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>df_clean <span class="sc">|&gt;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(pos) <span class="sc">|&gt;</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">avg_pts =</span> <span class="fu">mean</span>(pts_per_game, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(avg_pts))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 2
+  pos   avg_pts
+  &lt;chr&gt;   &lt;dbl&gt;
+1 SG      10.7 
+2 SF      10.4 
+3 PG       9.78
+4 PF       9.69
+5 C        9.10
+6 &lt;NA&gt;     5.69</code></pre>
+</div>
+</div>
+<p>Guards, particularly point guards (PG) and shooting guards (SG), tend to exhibit higher average scoring output compared to several other positions.</p>
+<p>This pattern may reflect the offensive responsibilities commonly associated with guard positions, including ball handling, perimeter shooting, shot creation, and primary offensive initiation. In contrast, forwards and centers may contribute more heavily through rebounding, interior defense, screening, or rim protection depending on team structure and player role.</p>
+<p>These results suggest that player position and team role can influence offensive production beyond individual scoring ability alone.</p>
+</section>
+<section id="minutes-played-vs-points-per-game-ppg" class="level2">
+<h2 class="anchored" data-anchor-id="minutes-played-vs-points-per-game-ppg">Minutes Played Vs Points Per Game (PPG)</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize relationship between playing time and scoring</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>df_clean <span class="sc">|&gt;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> mp_per_game, <span class="at">y =</span> pts_per_game)) <span class="sc">+</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Minutes Played vs Points Per Game"</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Minutes Per Game (MPG)"</span>,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Points Per Game (PPG)"</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="NBA-Player-Performance_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The visualization demonstrates a strong positive linear relationship between minutes played and points per game. Players receiving greater playing time generally tend to produce higher scoring averages.</p>
+<p>This relationship suggests that playing time is an important contributor to offensive production, as increased court time provides additional possessions and scoring opportunities. While shooting efficiency and individual skill remain important factors, their impact is often influenced by overall player usage and opportunity.</p>
+<p>The upward trend observed in the regression line supports the idea that scoring output is strongly associated with minutes played across NBA players in the dataset.</p>
+</section>
+<section id="correlation-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="correlation-analysis">Correlation Analysis</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select numeric variables for correlation analysis</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>corr_data <span class="ot">&lt;-</span> df_clean <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    pts_per_game,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    mp_per_game,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    fg_percent,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    x3p_percent,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    ft_percent,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    ast_per_game</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute correlation matrix</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(corr_data, <span class="at">use =</span> <span class="st">"complete.obs"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             pts_per_game mp_per_game  fg_percent x3p_percent  ft_percent
+pts_per_game    1.0000000   0.8647952  0.29847026   0.1161865  0.26811284
+mp_per_game     0.8647952   1.0000000  0.24152510   0.0831034  0.19902502
+fg_percent      0.2984703   0.2415251  1.00000000  -0.1038611 -0.08928625
+x3p_percent     0.1161865   0.0831034 -0.10386114   1.0000000  0.25370074
+ft_percent      0.2681128   0.1990250 -0.08928625   0.2537007  1.00000000
+ast_per_game    0.5403022   0.5963223  0.01692006   0.1576934  0.24182320
+             ast_per_game
+pts_per_game   0.54030224
+mp_per_game    0.59632229
+fg_percent     0.01692006
+x3p_percent    0.15769335
+ft_percent     0.24182320
+ast_per_game   1.00000000</code></pre>
+</div>
+</div>
+<p>The correlation matrix was used to evaluate relationships between scoring, playing time, shooting efficiency, and assists.</p>
+<p>Points per game demonstrated a strong positive correlation with minutes played, supporting earlier findings that player opportunity and court time are closely associated with offensive production. Positive relationships were also observed between scoring and shooting efficiency metrics, though the strength of these relationships varied across variables.</p>
+</section>
+<section id="regression-model" class="level2">
+<h2 class="anchored" data-anchor-id="regression-model">Regression Model</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build linear regression model predicting scoring output</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  pts_per_game <span class="sc">~</span> mp_per_game <span class="sc">+</span> fg_percent <span class="sc">+</span> x3p_percent <span class="sc">+</span> ft_percent,</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df_clean</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="co"># View regression results</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = pts_per_game ~ mp_per_game + fg_percent + x3p_percent + 
+    ft_percent, data = df_clean)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-13.1136  -1.6896  -0.0584   1.4145  17.6061 
+
+Coefficients:
+              Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) -12.908096   0.212213 -60.826   &lt;2e-16 ***
+mp_per_game   0.573630   0.002589 221.576   &lt;2e-16 ***
+fg_percent   10.867049   0.341104  31.858   &lt;2e-16 ***
+x3p_percent   1.221659   0.132431   9.225   &lt;2e-16 ***
+ft_percent    5.733351   0.194047  29.546   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 2.8 on 19218 degrees of freedom
+  (6737 observations deleted due to missingness)
+Multiple R-squared:  0.7701,    Adjusted R-squared:   0.77 
+F-statistic: 1.609e+04 on 4 and 19218 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>A multiple linear regression model was developed to examine how playing time and shooting efficiency metrics influence scoring output among NBA players.</p>
+<p>The model uses: - Minutes Per Game (MPG) - Field Goal Percentage (FG%) - Three-Point Percentage (3PT%) - Free Throw Percentage (FT%)</p>
+<p>to predict: - Points Per Game (PPG)</p>
+<p>This approach allows the analysis to evaluate the relative contribution of playing time and shooting efficiency while controlling for multiple variables simultaneously.</p>
+<p>##Regression Equation and Coefficients</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract regression coefficients</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'broom' was built under R version 4.5.2</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tidy</span>(model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 5
+  term        estimate std.error statistic   p.value
+  &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+1 (Intercept)  -12.9     0.212      -60.8  0        
+2 mp_per_game    0.574   0.00259    222.   0        
+3 fg_percent    10.9     0.341       31.9  4.33e-217
+4 x3p_percent    1.22    0.132        9.22 3.13e- 20
+5 ft_percent     5.73    0.194       29.5  1.13e-187</code></pre>
+</div>
+</div>
+<p>The estimated regression equation for predicting points per game (PPG) is: PTS=−12.91+0.57(MP)+10.87(FG%)+1.22(3PT%)+5.73(FT%)</p>
+<p>The regression coefficients suggest that minutes played (MP) has a strong positive association with scoring output. Holding other variables constant, increases in playing time are associated with higher predicted points per game.</p>
+<p>Field goal percentage (FG%) also demonstrates a substantial positive relationship with scoring, indicating that overall shooting efficiency contributes meaningfully to offensive production.</p>
+<p>Three-point percentage (3PT%) and free throw percentage (FT%) show smaller positive relationships with scoring output, though their relative influence may differ depending on player role and offensive usage.</p>
+</section>
+<section id="expanded-regression-model-assists" class="level2">
+<h2 class="anchored" data-anchor-id="expanded-regression-model-assists">Expanded Regression Model: Assists</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extend regression model by including assists per game</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>model2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  pts_per_game <span class="sc">~</span> mp_per_game <span class="sc">+</span> fg_percent <span class="sc">+</span> x3p_percent <span class="sc">+</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    ft_percent <span class="sc">+</span> ast_per_game,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df_clean</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="co"># View updated regression results</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = pts_per_game ~ mp_per_game + fg_percent + x3p_percent + 
+    ft_percent + ast_per_game, data = df_clean)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-12.9683  -1.6795  -0.0559   1.4241  17.2625 
+
+Coefficients:
+               Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  -12.820435   0.212105 -60.444   &lt;2e-16 ***
+mp_per_game    0.558173   0.003188 175.090   &lt;2e-16 ***
+fg_percent    11.252140   0.343667  32.741   &lt;2e-16 ***
+x3p_percent    1.124063   0.132723   8.469   &lt;2e-16 ***
+ft_percent     5.550516   0.194961  28.470   &lt;2e-16 ***
+ast_per_game   0.113488   0.013706   8.280   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 2.795 on 19217 degrees of freedom
+  (6737 observations deleted due to missingness)
+Multiple R-squared:  0.7709,    Adjusted R-squared:  0.7708 
+F-statistic: 1.293e+04 on 5 and 19217 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<p>To further evaluate offensive contribution, assists per game (APG) were added to the regression model. Assists provide an additional measure of offensive involvement beyond individual scoring output.</p>
+<p>The updated model suggests that assists per game are positively associated with points per game, indicating that players with larger offensive and playmaking responsibilities also tend to produce higher scoring averages.</p>
+<p>This relationship may reflect the broader offensive role of primary ball handlers and playmakers, who frequently contribute both as scorers and facilitators within team offensive systems.</p>
+</section>
+<section id="model-predictions" class="level2">
+<h2 class="anchored" data-anchor-id="model-predictions">Model Predictions</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate predicted scoring values from regression model</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>df_clean <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">predicted_pts =</span> <span class="fu">predict</span>(model, <span class="at">newdata =</span> df_clean)) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(player, pts_per_game, predicted_pts) <span class="sc">|&gt;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 3
+   player                   pts_per_game predicted_pts
+   &lt;chr&gt;                           &lt;dbl&gt;         &lt;dbl&gt;
+ 1 Precious Achiuwa                  8.1          8.32
+ 2 Steven Adams                      5.8         NA   
+ 3 Bam Adebayo                      18.6         14.8 
+ 4 Ochai Agbaji                      4.5          5.75
+ 5 Ochai Agbaji                      4.3          5.76
+ 6 Ochai Agbaji                      5.7          4.36
+ 7 Santi Aldama                     14           12.6 
+ 8 Nickeil Alexander-Walker         19.8         16.4 
+ 9 Grayson Allen                    17.5         14.2 
+10 Jarrett Allen                    15.3         14.2 </code></pre>
+</div>
+</div>
+<p>The predicted scoring values generated by the regression model are generally similar to observed points per game values for many players in the dataset. This suggests that the model captures important relationships between playing time, shooting efficiency, and scoring production.</p>
+<p>While individual prediction errors remain present, the results indicate that the selected variables provide useful explanatory power for estimating offensive output across NBA players.</p>
+<p>##Largest Prediction Errors</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load libraries</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Import dataset with UTF-8 encoding</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"nbadataset/Player Per Game.csv"</span>,</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">locale =</span> <span class="fu">locale</span>(<span class="at">encoding =</span> <span class="st">"UTF-8"</span>)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 33278 Columns: 32
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (5): lg, player, player_id, team, pos
+dbl (27): season, age, g, gs, mp_per_game, fg_per_game, fga_per_game, fg_per...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Clean special characters in player names</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>player <span class="ot">&lt;-</span> <span class="fu">iconv</span>(</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  df<span class="sc">$</span>player,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">from =</span> <span class="st">"UTF-8"</span>,</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">to =</span> <span class="st">"ASCII"</span>,</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">sub =</span> <span class="st">""</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Preview dataset structure</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 33,278
+Columns: 32
+$ season        &lt;dbl&gt; 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 2026, 20…
+$ lg            &lt;chr&gt; "NBA", "NBA", "NBA", "NBA", "NBA", "NBA", "NBA", "NBA", …
+$ player        &lt;chr&gt; "Precious Achiuwa", "Steven Adams", "Bam Adebayo", "Ocha…
+$ player_id     &lt;chr&gt; "achiupr01", "adamsst01", "adebaba01", "agbajoc01", "agb…
+$ age           &lt;dbl&gt; 26, 32, 28, 25, 25, 25, 25, 27, 22, 30, 27, 27, 27, 27, …
+$ team          &lt;chr&gt; "SAC", "HOU", "MIA", "2TM", "TOR", "BRK", "MEM", "ATL", …
+$ pos           &lt;chr&gt; "C", "C", "C", "SG", "SG", "SG", "PF", "SG", "SG", "SG",…
+$ g             &lt;dbl&gt; 53, 32, 53, 49, 42, 7, 43, 58, 5, 38, 49, 49, 41, 8, 24,…
+$ gs            &lt;dbl&gt; 37, 11, 53, 13, 13, 0, 11, 51, 0, 26, 49, 0, 0, 0, 3, 0,…
+$ mp_per_game   &lt;dbl&gt; 21.2, 22.8, 31.4, 15.5, 15.5, 15.7, 27.9, 33.2, 8.4, 30.…
+$ fg_per_game   &lt;dbl&gt; 3.5, 2.2, 6.6, 1.8, 1.7, 2.0, 5.3, 6.7, 1.2, 5.7, 6.0, 2…
+$ fga_per_game  &lt;dbl&gt; 6.7, 4.3, 14.8, 4.1, 4.0, 4.6, 11.1, 15.5, 1.8, 13.9, 9.…
+$ fg_percent    &lt;dbl&gt; 0.517, 0.504, 0.449, 0.426, 0.424, 0.438, 0.479, 0.431, …
+$ x3p_per_game  &lt;dbl&gt; 0.4, 0.0, 1.7, 0.5, 0.3, 1.6, 1.6, 3.0, 0.4, 3.4, 0.0, 1…
+$ x3pa_per_game &lt;dbl&gt; 1.2, 0.0, 4.9, 1.8, 1.5, 3.0, 4.7, 8.1, 0.6, 9.4, 0.2, 4…
+$ x3p_percent   &lt;dbl&gt; 0.328, NA, 0.344, 0.267, 0.185, 0.524, 0.350, 0.373, 0.6…
+$ x2p_per_game  &lt;dbl&gt; 3.1, 2.2, 4.9, 1.3, 1.4, 0.4, 3.7, 3.7, 0.8, 2.3, 6.0, 1…
+$ x2pa_per_game &lt;dbl&gt; 5.5, 4.3, 9.9, 2.4, 2.5, 1.6, 6.4, 7.4, 1.2, 4.6, 9.2, 2…
+$ x2p_percent   &lt;dbl&gt; 0.556, 0.504, 0.501, 0.543, 0.571, 0.273, 0.572, 0.495, …
+$ e_fg_percent  &lt;dbl&gt; 0.545, 0.504, 0.506, 0.483, 0.459, 0.609, 0.553, 0.529, …
+$ ft_per_game   &lt;dbl&gt; 0.8, 1.5, 3.7, 0.5, 0.6, 0.1, 1.8, 3.4, 0.0, 2.8, 3.3, 0…
+$ fta_per_game  &lt;dbl&gt; 1.5, 2.5, 4.8, 0.6, 0.7, 0.3, 2.7, 3.9, 0.0, 3.2, 4.5, 0…
+$ ft_percent    &lt;dbl&gt; 0.532, 0.580, 0.765, 0.839, 0.862, 0.500, 0.667, 0.888, …
+$ orb_per_game  &lt;dbl&gt; 2.1, 4.5, 2.1, 0.8, 0.8, 0.7, 1.6, 0.6, 0.0, 0.7, 2.7, 0…
+$ drb_per_game  &lt;dbl&gt; 3.7, 4.1, 7.8, 1.5, 1.5, 1.7, 5.1, 3.0, 0.8, 2.4, 6.0, 2…
+$ trb_per_game  &lt;dbl&gt; 5.8, 8.6, 9.9, 2.3, 2.3, 2.4, 6.7, 3.6, 0.8, 3.1, 8.6, 2…
+$ ast_per_game  &lt;dbl&gt; 1.2, 1.5, 2.8, 0.8, 0.7, 1.4, 2.9, 3.8, 1.0, 3.9, 2.0, 3…
+$ stl_per_game  &lt;dbl&gt; 0.9, 0.7, 1.0, 0.4, 0.4, 0.1, 0.9, 1.2, 0.2, 1.4, 1.0, 1…
+$ blk_per_game  &lt;dbl&gt; 0.6, 0.6, 0.7, 0.3, 0.3, 0.4, 0.7, 0.6, 0.2, 0.3, 0.9, 0…
+$ tov_per_game  &lt;dbl&gt; 0.7, 1.1, 1.8, 0.4, 0.5, 0.4, 1.3, 2.1, 0.2, 1.7, 1.3, 1…
+$ pf_per_game   &lt;dbl&gt; 1.7, 1.7, 1.6, 1.6, 1.8, 0.6, 1.6, 2.1, 0.8, 2.2, 1.8, 2…
+$ pts_per_game  &lt;dbl&gt; 8.1, 5.8, 18.6, 4.5, 4.3, 5.7, 14.0, 19.8, 2.8, 17.5, 15…</code></pre>
+</div>
+</div>
+<p>To evaluate model performance, absolute prediction error was calculated as the difference between actual and predicted points per game values.</p>
+<p>Players with the largest prediction errors may represent observations where scoring output is influenced by factors not fully captured in the model, such as: - offensive usage, - injuries, - team system, - shot volume, - or unique player roles.</p>
+<p>Examining these high-error observations helps identify potential limitations of the regression model and highlights opportunities for additional variables or model refinement.</p>
+</section>
+<section id="residual-diagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="residual-diagnostics">Residual Diagnostics</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot residuals to evaluate model fit</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  model<span class="sc">$</span>fitted.values,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">resid</span>(model),</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Fitted Values"</span>,</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">"Residuals"</span>,</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">"Residual Plot"</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="NBA-Player-Performance_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Residual analysis was conducted to evaluate the overall fit of the regression model and assess whether prediction errors were randomly distributed.</p>
+<p>The residual plot helps identify potential issues such as: - non-linearity, - unequal variance, - or influential observations.</p>
+<p>A relatively random distribution of residuals around zero suggests that the linear model reasonably captures the relationship between the selected variables and scoring output.</p>
+</section>
+<section id="findings-and-conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="findings-and-conclusion">Findings and Conclusion</h2>
+<p>This project analyzed how playing time, shooting efficiency, and offensive involvement influence scoring production among NBA players.</p>
+<p>The analysis showed that minutes played had the strongest positive relationship with points per game, highlighting the importance of player opportunity and overall usage in offensive production. Players receiving increased court time generally demonstrated higher scoring averages due to greater offensive involvement and possession opportunities.</p>
+<p>Shooting efficiency variables, particularly field goal percentage, also contributed positively to scoring output, indicating that efficient offensive performance plays a meaningful role in player scoring success. Position-based analysis suggested that guards tended to produce higher scoring averages, likely reflecting differences in offensive responsibilities such as ball handling, shot creation, and perimeter scoring.</p>
+<p>The expanded regression model further demonstrated that assists per game were positively associated with scoring, suggesting that players with significant offensive and playmaking responsibilities often contribute both as scorers and facilitators within team offensive systems.</p>
+<p>Model prediction and residual analysis indicated that the regression model captured important scoring patterns across NBA players, while also revealing limitations related to unmeasured factors such as offensive schemes, injuries, shot volume, and individual player roles.</p>
+<p>Overall, this project demonstrates how statistical modeling, visualization, and regression analysis can be applied to evaluate player performance and identify key contributors to offensive production in professional basketball.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
