@@ -1,0 +1,302 @@
+---
+title: "What Drives NBA Scoring? A Regression Analysis of Player Performance"
+author: "Shawntay Brown"
+format: html
+editor: visual
+---
+
+## NBA Player Performance Analysis
+
+This project analyzes the factors that influence NBA player scoring performance, focusing on how playing time, shooting efficiency, and player position impact points per game (PPG).
+
+Using descriptive statistics, data visualization, and regression modeling, the analysis evaluates the relative influence of these variables on offensive production. The project aims to identify the strongest predictors of scoring output and demonstrate how opportunity, efficiency, and player role interact to influence overall performance.
+
+
+##Loading and Cleaning Data
+
+```{r}
+# Load required libraries
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Import NBA player performance dataset
+df <- read_csv("nbadataset/Player Per Game.csv")
+
+# Preview dataset structure
+glimpse(df)
+```
+The dataset contains over 33,000 NBA player observations and includes variables related to:
+- scoring performance,
+- shooting efficiency,
+- playing time,
+- and player position.
+
+Key variables analyzed in this project include:
+- Points Per Game (PTS),
+- Minutes Played (MP),
+- Field Goal Percentage (FG%),
+- Three-Point Percentage (3P%),
+- Free Throw Percentage (FT%),
+- Position
+
+
+```{r}
+# Remove low-minute players to reduce noise and improve model stability
+
+df_clean <- df |>
+  filter(mp_per_game >= 10)
+```
+
+Players averaging fewer than 10 minutes per game were excluded from the analysis. Low-minute players often exhibit highly variable performance statistics due to limited playing time, which can introduce noise and distort overall scoring trends.
+
+Filtering these observations improves the stability and interpretability of the analysis by focusing on players with more consistent game participation and offensive roles.
+
+
+## Top Scorers
+
+```{r}
+# Identify top scorers in the dataset
+
+df_clean |>
+  arrange(desc(pts_per_game)) |>
+  dplyr::select(player, team, pos, pts_per_game, mp_per_game) |>
+  slice_head(n = 10)
+```
+
+The highest-scoring players in the dataset also tend to average high minutes per game, suggesting a strong relationship between playing time and scoring production.
+
+This finding indicates that scoring output is influenced not only by shooting ability and offensive skill, but also by opportunity and player usage. Increased playing time provides players with more possessions and scoring opportunities, which may contribute to higher points-per-game averages. 
+
+
+## Points By Position
+
+```{r}
+# Calculate average scoring by player position
+
+df_clean |>
+  group_by(pos) |>
+  summarise(avg_pts = mean(pts_per_game, na.rm = TRUE)) |>
+  arrange(desc(avg_pts))
+```
+
+Guards, particularly point guards (PG) and shooting guards (SG), tend to exhibit higher average scoring output compared to several other positions.
+
+This pattern may reflect the offensive responsibilities commonly associated with guard positions, including ball handling, perimeter shooting, shot creation, and primary offensive initiation. In contrast, forwards and centers may contribute more heavily through rebounding, interior defense, screening, or rim protection depending on team structure and player role.
+
+These results suggest that player position and team role can influence offensive production beyond individual scoring ability alone.
+
+
+## Minutes Played Vs Points Per Game (PPG)
+
+```{r}
+# Visualize relationship between playing time and scoring
+
+df_clean |>
+  ggplot(aes(x = mp_per_game, y = pts_per_game)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Minutes Played vs Points Per Game",
+    x = "Minutes Per Game (MPG)",
+    y = "Points Per Game (PPG)"
+  )
+```
+
+The visualization demonstrates a strong positive linear relationship between minutes played and points per game. Players receiving greater playing time generally tend to produce higher scoring averages.
+
+This relationship suggests that playing time is an important contributor to offensive production, as increased court time provides additional possessions and scoring opportunities. While shooting efficiency and individual skill remain important factors, their impact is often influenced by overall player usage and opportunity.
+
+The upward trend observed in the regression line supports the idea that scoring output is strongly associated with minutes played across NBA players in the dataset.
+
+
+## Correlation Analysis
+
+```{r}
+# Select numeric variables for correlation analysis
+
+corr_data <- df_clean |>
+  dplyr::select(
+    pts_per_game,
+    mp_per_game,
+    fg_percent,
+    x3p_percent,
+    ft_percent,
+    ast_per_game
+  )
+
+# Compute correlation matrix
+
+cor(corr_data, use = "complete.obs")
+```
+
+The correlation matrix was used to evaluate relationships between scoring, playing time, shooting efficiency, and assists.
+
+Points per game demonstrated a strong positive correlation with minutes played, supporting earlier findings that player opportunity and court time are closely associated with offensive production. Positive relationships were also observed between scoring and shooting efficiency metrics, though the strength of these relationships varied across variables.
+
+
+## Regression Model
+
+```{r}
+# Build linear regression model predicting scoring output
+
+model <- lm(
+  pts_per_game ~ mp_per_game + fg_percent + x3p_percent + ft_percent,
+  data = df_clean
+)
+
+# View regression results
+
+summary(model)
+```
+
+A multiple linear regression model was developed to examine how playing time and shooting efficiency metrics influence scoring output among NBA players.
+
+The model uses:
+- Minutes Per Game (MPG)
+- Field Goal Percentage (FG%)
+- Three-Point Percentage (3PT%)
+- Free Throw Percentage (FT%)
+
+to predict:
+- Points Per Game (PPG)
+
+This approach allows the analysis to evaluate the relative contribution of playing time and shooting efficiency while controlling for multiple variables simultaneously.
+
+
+##Regression Equation and Coefficients
+
+```{r}
+# Extract regression coefficients
+
+library(broom)
+
+tidy(model)
+```
+
+The estimated regression equation for predicting points per game (PPG) is:
+PTS=−12.91+0.57(MP)+10.87(FG%)+1.22(3PT%)+5.73(FT%)
+
+The regression coefficients suggest that minutes played (MP) has a strong positive association with scoring output. Holding other variables constant, increases in playing time are associated with higher predicted points per game.
+
+Field goal percentage (FG%) also demonstrates a substantial positive relationship with scoring, indicating that overall shooting efficiency contributes meaningfully to offensive production.
+
+Three-point percentage (3PT%) and free throw percentage (FT%) show smaller positive relationships with scoring output, though their relative influence may differ depending on player role and offensive usage.
+
+
+## Expanded Regression Model: Assists
+
+```{r}
+# Extend regression model by including assists per game
+
+model2 <- lm(
+  pts_per_game ~ mp_per_game + fg_percent + x3p_percent +
+    ft_percent + ast_per_game,
+  data = df_clean
+)
+
+# View updated regression results
+
+summary(model2)
+```
+To further evaluate offensive contribution, assists per game (APG) were added to the regression model. Assists provide an additional measure of offensive involvement beyond individual scoring output.
+
+The updated model suggests that assists per game are positively associated with points per game, indicating that players with larger offensive and playmaking responsibilities also tend to produce higher scoring averages.
+
+This relationship may reflect the broader offensive role of primary ball handlers and playmakers, who frequently contribute both as scorers and facilitators within team offensive systems.
+
+
+## Model Predictions
+
+```{r}
+# Generate predicted scoring values from regression model
+
+df_clean |>
+  mutate(predicted_pts = predict(model, newdata = df_clean)) |>
+  dplyr::select(player, pts_per_game, predicted_pts) |>
+  slice_head(n = 10)
+```
+
+
+The predicted scoring values generated by the regression model are generally similar to observed points per game values for many players in the dataset. This suggests that the model captures important relationships between playing time, shooting efficiency, and scoring production.
+
+While individual prediction errors remain present, the results indicate that the selected variables provide useful explanatory power for estimating offensive output across NBA players.
+
+
+##Largest Prediction Errors
+
+```{r}
+# Load libraries
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Import dataset with UTF-8 encoding
+df <- read_csv(
+  "nbadataset/Player Per Game.csv",
+  locale = locale(encoding = "UTF-8")
+)
+
+# Clean special characters in player names
+df$player <- iconv(
+  df$player,
+  from = "UTF-8",
+  to = "ASCII",
+  sub = ""
+)
+
+# Preview dataset structure
+glimpse(df)
+```
+
+To evaluate model performance, absolute prediction error was calculated as the difference between actual and predicted points per game values.
+
+Players with the largest prediction errors may represent observations where scoring output is influenced by factors not fully captured in the model, such as:
+- offensive usage,
+- injuries,
+- team system,
+- shot volume,
+- or unique player roles.
+
+Examining these high-error observations helps identify potential limitations of the regression model and highlights opportunities for additional variables or model refinement.
+
+
+## Residual Diagnostics
+
+```{r}
+# Plot residuals to evaluate model fit
+plot(
+  model$fitted.values,
+  resid(model),
+  xlab = "Fitted Values",
+  ylab = "Residuals",
+  main = "Residual Plot"
+)
+
+abline(h = 0, col = "red")
+```
+
+
+Residual analysis was conducted to evaluate the overall fit of the regression model and assess whether prediction errors were randomly distributed.
+
+The residual plot helps identify potential issues such as:
+- non-linearity,
+- unequal variance,
+- or influential observations.
+
+A relatively random distribution of residuals around zero suggests that the linear model reasonably captures the relationship between the selected variables and scoring output.
+
+
+## Findings and Conclusion
+
+This project analyzed how playing time, shooting efficiency, and offensive involvement influence scoring production among NBA players.
+
+The analysis showed that minutes played had the strongest positive relationship with points per game, highlighting the importance of player opportunity and overall usage in offensive production. Players receiving increased court time generally demonstrated higher scoring averages due to greater offensive involvement and possession opportunities.
+
+Shooting efficiency variables, particularly field goal percentage, also contributed positively to scoring output, indicating that efficient offensive performance plays a meaningful role in player scoring success. Position-based analysis suggested that guards tended to produce higher scoring averages, likely reflecting differences in offensive responsibilities such as ball handling, shot creation, and perimeter scoring.
+
+The expanded regression model further demonstrated that assists per game were positively associated with scoring, suggesting that players with significant offensive and playmaking responsibilities often contribute both as scorers and facilitators within team offensive systems.
+
+Model prediction and residual analysis indicated that the regression model captured important scoring patterns across NBA players, while also revealing limitations related to unmeasured factors such as offensive schemes, injuries, shot volume, and individual player roles.
+
+Overall, this project demonstrates how statistical modeling, visualization, and regression analysis can be applied to evaluate player performance and identify key contributors to offensive production in professional basketball.
